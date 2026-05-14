@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sticky Notes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .app-container {
+            display: none;
+            flex-direction: row; /* Modified for sidebar layout */
+            min-height: 100vh;
+            display : flex;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            font-size: 1rem;
+            color: white;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notification.success {
+            background-color: #28a745;
+        }
+
+        .notification.error {
+            background-color: #dc3545;
+        }
+
+        .close-notification {
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 15px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="app-title">
+                    <img src="stickynote.png" alt="App Logo" class="app-logo">
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="view-heading">Views</li>
+                    <li><a href="#"><i class="fas fa-list"></i> All Notes</a></li>
+                    <li><a href="#"><i class="fas fa-thumbtack"></i> Pinned</a></li>
+                    <li><a href="#"><i class="fas fa-clock"></i> Recent</a></li>
+                    <li class="category-heading">Categories</li>
+                    <li><a href="#"><i class="fas fa-briefcase"></i> Work</a></li>
+                    <li><a href="#"><i class="fas fa-user"></i> Personal</a></li>
+                    <li><a href="#"><i class="fas fa-lightbulb"></i> Ideas</a></li>
+                    <li class="action-heading">Actions</li>
+                    <li><a href="#" class="export-notes-btn"><i class="fas fa-file-export"></i> Export Notes</a></li>
+                    <li><label for="import-notes-input" class="import-notes-label">
+                            <i class="fas fa-file-import"></i> Import Notes
+                        </label>
+                        <input type="file" id="import-notes-input" class="import-notes-input" accept=".json">
+                    </li>
+                    <li class="logout-item">
+                        <a href="#" id="logoutButton">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <div class="header-top">
+                    <div class="controls">
+                        <div class="search-container">
+                            <input type="text" class="search-bar" placeholder="Search notes...">
+                        </div>
+                        <div class="user-info">
+                            <!-- Fix the user avatar path -->
+                            <!-- In index.html -->
+                            <img src="person.png" alt="User" class="user-avatar">
+                            <span class="username">User Name</span>
+                        </div>
+                        <div class="dark-mode-toggle">
+                            <i class="fa fa-moon"></i>
+                            <div class="toggle-switch"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="notes-grid">
+                <!-- Notes are displayed here -->
+            </div>
+            <div class="status-bar">
+                0 notes • 0 pinned
+            </div>
+            <button id="floatingAddButton" class="floating-add-button">
+                <i class="fas fa-plus"></i>
+            </button>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    
+    <!-- Fix script paths and loading order -->
+    <script src="note.js"></script> 
+    <script src="noteView.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const appContainer = document.querySelector('.app-container');
+        const statusBar = document.querySelector('.status-bar');
+        const logoutButton = document.getElementById('logoutButton');
+        const usernameElement = document.querySelector('.username'); // Get the username span element
+    
+        // Notification function
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+    
+            // Add close button
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close-notification';
+            closeBtn.innerHTML = '×';
+            closeBtn.onclick = function () {
+                document.body.removeChild(notification);
+            };
+            notification.appendChild(closeBtn);
+    
+            // Add to body
+            document.body.appendChild(notification);
+    
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 5000);
+        }
+    
+        // Logout function
+        const logout = () => {
+            // Create overlay for the entire screen
+            const overlay = document.createElement('div');
+            overlay.className = 'delete-overlay';
+    
+            // Create confirmation dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'delete-confirmation';
+            confirmDialog.innerHTML = `
+                <div class="delete-header">
+                    <h3>Logout</h3>
+                </div>
+                <div class="delete-message">Are you sure you want to logout?</div>
+                <div class="delete-actions">
+                    <button class="delete-cancel">Cancel</button>
+                    <button class="delete-confirm">Logout</button>
+                </div>
+            `;
+    
+            // Add the overlay and dialog to the body
+            overlay.appendChild(confirmDialog);
+            document.body.appendChild(overlay);
+    
+            // Add event listeners to the buttons
+            confirmDialog.querySelector('.delete-cancel').addEventListener('click', function () {
+                overlay.remove();
+            });
+    
+            confirmDialog.querySelector('.delete-confirm').addEventListener('click', async function () {
+                // Clear token from cookie by setting maxAge to 0 or a past date
+                document.cookie = "token=; max-age=0; path=/; domain=localhost;"; // Adjust path and domain as needed
+    
+                localStorage.removeItem('darkMode'); // Assuming you store darkMode in local storage
+                showNotification('Logged out successfully!', 'success');
+                setTimeout(() => window.location.href = 'auth.html', 1000);
+            });
+        };
+    
+        // Authentication Check with Cookie
+        const checkAuthStatus = async () => {
+            console.log("Checking authentication status...");
+            try {
+                const response = await axios.post('http://localhost:3001/auth/google/token', {}, {
+                    withCredentials: true
+                });
+                if (response.status === 200) {
+                    // User is authenticated
+                    console.log("User is authenticated");
+                    appContainer.classList.add('authenticated');  // Show app if authenticated
+                    appContainer.style.display = 'flex'; // Ensure it's displayed
+                    statusBar.textContent = 'Connected to StickyNotes+ service';
+    
+                    // Update username in the UI with actual username from response
+                    if (response.data && response.data.user) {
+                        // Use displayName if available, otherwise username
+                        const displayedName = response.data.user.displayName || response.data.user.username;
+                        usernameElement.textContent = displayedName;
+                        console.log("Username updated:", displayedName);
+                    }
+                }
+            } catch (error) {
+                // Authentication failed
+                console.log("User is not authenticated", error);
+                window.location.href = 'auth.html';
+            }
+        };
+    
+        // Call the authentication check function on page load
+        checkAuthStatus();
+    
+        // Logout button event listener
+        logoutButton.addEventListener('click', logout);
+    });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Signup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <!-- Add Google OAuth Library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .auth-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .form-header {
+            margin-bottom: 30px;
+        }
+
+        .form-header h2 {
+            font-size: 1.75rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+        .app-title {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-logonew {
+            max-width: 220px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab-buttons button {
+            background-color: transparent;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1rem;
+            color: #777;
+            cursor: pointer;
+            outline: none;
+            transition: color 0.3s;
+        }
+
+        .tab-buttons button.active {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            color: #777;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 40px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #3498db;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .submit-btn:hover {
+            background-color: #555;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #fff;
+            color: #757575;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .google-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .google-logo {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .divider span {
+            padding: 0 10px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+        .form-footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        .form-footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="form-header">
+            <div class="app-title">
+                <img src="stickynote.png" alt="StickyNotes+ Logo" class="app-logonew">
+            </div>
+            <p>Create an account to get started</p>
+        </div>
+
+        <div class="tab-buttons">
+            <button id="login-tab" class="active">Login</button>
+            <button id="signup-tab">Signup</button>
+        </div>
+
+        <form id="login-form" autocomplete="off">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="login-username" placeholder="Username" required autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="login-password" placeholder="Password" required autocomplete="off">
+            </div>
+            <button type="submit" class="submit-btn">Login</button>
+            
+            <div class="divider">
+                <span>OR</span>
+            </div>
+            
+            <button type="button" class="google-btn" id="google-login-btn">
+                <svg class="google-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="none" d="M0 0h48v48H0z"/>
+                </svg>
+                Login with Google
+            </button>
+        </form>
+
+        <form id="signup-form" style="display: none;" autocomplete="off">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="signup-username" placeholder="Choose a username" required autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="signup-password" placeholder="Create a password" required autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required autocomplete="off">
+            </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+            
+            <div class="divider">
+                <span>OR</span>
+            </div>
+            
+            <button type="button" class="google-btn" id="google-signup-btn">
+                <svg class="google-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="none" d="M0 0h48v48H0z"/>
+                </svg>
+                Sign up with Google
+            </button>
+        </form>
+
+        <div class="form-footer" id="login-footer">
+            <p>Don't have an account? <a href="#" id="signup-link">Sign Up</a></p>
+        </div>
+        
+        <div class="form-footer" id="signup-footer" style="display: none;">
+            <p>Already have an account? <a href="#" id="login-link">Log In</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            setTimeout(() => {
+                clearLoginForm();
+                clearSignupForm();
+            }, 100);
+    
+            // Clear form fields on page load
+            document.getElementById('login-form').reset();
+            document.getElementById('signup-form').reset();
+            
+            const loginTab = document.getElementById('login-tab');
+            const signupTab = document.getElementById('signup-tab');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const signupLink = document.getElementById('signup-link');
+            const loginLink = document.getElementById('login-link');
+            const loginFooter = document.getElementById('login-footer');
+            const signupFooter = document.getElementById('signup-footer');
+
+            function clearLoginForm() {
+        const usernameField = document.getElementById('login-username');
+        const passwordField = document.getElementById('login-password');
+        
+        // Clear values
+        usernameField.value = '';
+        passwordField.value = '';
+        
+        // Modify attributes to prevent autofill
+        usernameField.setAttribute('autocomplete', 'new-username');
+        passwordField.setAttribute('autocomplete', 'new-password');
+        
+        // This trick helps defeat browser autofill
+        usernameField.setAttribute('name', 'username_' + new Date().getTime());
+        passwordField.setAttribute('name', 'password_' + new Date().getTime());
+    }
+    
+    function clearSignupForm() {
+        const usernameField = document.getElementById('signup-username');
+        const passwordField = document.getElementById('signup-password');
+        const confirmPasswordField = document.getElementById('signup-confirm-password');
+        
+        // Clear values
+        usernameField.value = '';
+        passwordField.value = '';
+        confirmPasswordField.value = '';
+        
+        // Modify attributes to prevent autofill
+        usernameField.setAttribute('autocomplete', 'new-username');
+        passwordField.setAttribute('autocomplete', 'new-password');
+        confirmPasswordField.setAttribute('autocomplete', 'new-password');
+        
+        // This trick helps defeat browser autofill
+        usernameField.setAttribute('name', 'signup_username_' + new Date().getTime());
+        passwordField.setAttribute('name', 'signup_password_' + new Date().getTime());
+        confirmPasswordField.setAttribute('name', 'signup_confirm_' + new Date().getTime());
+    }
+
+            function showLoginForm() {
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+                loginFooter.style.display = 'block';
+                signupFooter.style.display = 'none';
+                // Clear signup form fields when switching tabs
+                document.getElementById('signup-form').reset();
+            }
+
+            function showSignupForm() {
+                signupTab.classList.add('active');
+                loginTab.classList.remove('active');
+                signupForm.style.display = 'block';
+                loginForm.style.display = 'none';
+                loginFooter.style.display = 'none';
+                signupFooter.style.display = 'block';
+                // Clear login form fields when switching tabs
+                document.getElementById('login-form').reset();
+            }
+
+            loginTab.addEventListener('click', showLoginForm);
+            signupTab.addEventListener('click', showSignupForm);
+            signupLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                showSignupForm();
+            });
+            loginLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                showLoginForm();
+            });
+
+            window.resetAuthForms = function() {
+        clearLoginForm();
+        clearSignupForm();
+    };
+    
+    // Enhanced pageshow handler
+    window.addEventListener('pageshow', function(event) {
+        // This will also clear the form on back button navigation
+        if (event.persisted) {
+            clearLoginForm();
+            clearSignupForm();
+        }
+    });
+
+            // Google Authentication
+            const googleLoginBtn = document.getElementById('google-login-btn');
+            const googleSignupBtn = document.getElementById('google-signup-btn');
+            
+            googleLoginBtn.addEventListener('click', handleGoogleAuth);
+            googleSignupBtn.addEventListener('click', handleGoogleAuth);
+            
+            function handleGoogleAuth() {
+                // Redirect to backend Google auth route
+                window.location.href = 'http://localhost:3001/auth/google';
+            }
+
+            // Regular form submission handlers
+            const loginFormElement = document.getElementById('login-form');
+            //In auth.html
+ loginFormElement.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+
+                try {
+                    const response = await axios.post('http://localhost:3001/auth/login', { username, password }, { withCredentials: true });
+
+                    if (response.status === 200) {
+                        // No need to get token from response anymore since it is set as cookie
+                        Toastify({
+                            text: "Login successful!",
+                            backgroundColor: "green",
+                            duration: 3000
+                        }).showToast();
+                      const username = response.data.username;
+                    //   setUsernameInUI(username); //Set the username in UI
+                        window.location.href = 'index.html';
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    Toastify({
+                        text: "Login failed. Please check your credentials.",
+                        backgroundColor: "red",
+                        duration: 3000
+                    }).showToast();
+                }
+            });
+//Also add the function to set username in UI here
+
+//Function to set username in UI
+// function setUsernameInUI(username){
+// const usernameSpan = document.querySelector('.username');
+// usernameSpan.textContent = username;
+// }
+
+            const signupFormElement = document.getElementById('signup-form');
+            signupFormElement.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const username = document.getElementById('signup-username').value;
+                const password = document.getElementById('signup-password').value;
+                const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+                if (password !== confirmPassword) {
+                    Toastify({
+                        text: "Passwords do not match.",
+                        backgroundColor: "red",
+                        duration: 3000
+                    }).showToast();
+                    return;
+                }
+
+                try {
+                    const response = await axios.post('http://localhost:3001/auth/signup', { username, password });
+
+                    if (response.status === 201) {
+                        Toastify({
+                            text: "Signup successful! Please log in.",
+                            backgroundColor: "green",
+                            duration: 3000
+                        }).showToast();
+
+                        // Clear form and switch to login
+                        document.getElementById('signup-form').reset();
+                        showLoginForm();
+                    }
+                } catch (error) {
+                    console.error('Signup error:', error);
+                    Toastify({
+                        text: "Signup failed. Please try again.",
+                        backgroundColor: "red",
+                        duration: 3000
+                    }).showToast();
+                }
+            });
+            
+            // Prevent autofill on page load
+            window.addEventListener('pageshow', function() {
+                document.getElementById('login-form').reset();
+                document.getElementById('signup-form').reset();
+            });
+        });
+    </script>
+</body>
+</html>

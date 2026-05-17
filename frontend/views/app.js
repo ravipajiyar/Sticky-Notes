@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://localhost:3001/notes/batch-update', {
+                const response = await fetch('/notes/batch-update', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -784,7 +784,7 @@ function importNotes(event) {
                 noteData.position = JSON.parse(noteData.position);
             }
             
-            const response = await fetch(`http://localhost:3001/notes/update/${noteData.id}`, {
+            const response = await fetch(`/notes/update/${noteData.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -812,7 +812,7 @@ function importNotes(event) {
                 newNoteData.position = JSON.parse(newNoteData.position);
             }
 
-            const response = await fetch('http://localhost:3001/notes', {
+            const response = await fetch('/notes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -978,7 +978,7 @@ function filterNotesByCategory(category) {
             }
     
             // Build URL with filter
-            let url = `http://localhost:3001/notes/list?page=${page}&limit=10`;
+            let url = `/notes/list?page=${page}&limit=10`;
             if (odataFilter) {
                 const encodedFilter = encodeURIComponent(odataFilter);
                 url += `&$filter=${encodedFilter}`;
@@ -1142,7 +1142,7 @@ function filterNotesByCategory(category) {
 
         confirmDialog.querySelector('.delete-confirm').addEventListener('click', async function () {
            try {
-                const response = await fetch(`http://localhost:3001/notes/delete/${noteId}`, {
+                const response = await fetch(`/notes/delete/${noteId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -1279,7 +1279,7 @@ function filterNotesByCategory(category) {
     floatingAddButton.addEventListener('click', async () => {
         try {
             // Make a POST request to create a new note on the server
-            const response = await fetch('http://localhost:3001/notes', {
+            const response = await fetch('/notes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -400,19 +400,19 @@
             
             function handleGoogleAuth() {
                 // Redirect to backend Google auth route
-                window.location.href = 'http://localhost:3001/auth/google';
+                window.location.href = '/auth/google';
+
             }
 
             // Regular form submission handlers
             const loginFormElement = document.getElementById('login-form');
-            //In auth.html
- loginFormElement.addEventListener('submit', async (event) => {
+            loginFormElement.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const username = document.getElementById('login-username').value;
                 const password = document.getElementById('login-password').value;
 
                 try {
-                    const response = await axios.post('http://localhost:3001/auth/login', { username, password }, { withCredentials: true });
+                    const response = await axios.post('/auth/login', { username, password }, { withCredentials: true });
 
                     if (response.status === 200) {
                         // No need to get token from response anymore since it is set as cookie
@@ -459,7 +459,7 @@
                 }
 
                 try {
-                    const response = await axios.post('http://localhost:3001/auth/signup', { username, password });
+                    const response = await axios.post('/auth/signup', { username, password });
 
                     if (response.status === 201) {
                         Toastify({

@@ -38,8 +38,8 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(passport.initialize());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 // Serve static files from frontend/views
 const staticFilesPath = path.join(__dirname, "../frontend/views");

@@ -350,7 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token || ''}`,
                         'X-Request-ID': `BatchUpdate-${Date.now()}`
                     },
                     body: JSON.stringify({ updates: notes })

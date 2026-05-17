@@ -1,259 +1,147 @@
 # StickyPro: Enterprise-Grade Offline-First Note System
 
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge\&logo=nodedotjs\&logoColor=white)](https://nodejs.org/)
-[![MSSQL](https://img.shields.io/badge/MSSQL-CC2927?style=for-the-badge\&logo=microsoftsqlserver\&logoColor=white)]()
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)]()
-[![JavaScript](https://img.shields.io/badge/Vanilla_JS-F7DF1E?style=for-the-badge\&logo=javascript\&logoColor=black)]()
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)]()
+[![Aiven](https://img.shields.io/badge/Aiven-Cloud_DB-FF4C00?style=for-the-badge&logo=aiven&logoColor=white)]()
+[![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=white)]()
 
-StickyPro is a full-stack offline-first note management system designed to demonstrate modern backend engineering concepts, secure authentication flows, and resilient client-side data synchronization. The project focuses heavily on reliability, scalability, and developer-friendly infrastructure.
+StickyPro is a full-stack engineering demonstration of **offline-first architecture**, **cloud database migration**, and **resilient synchronization**. Originally built on MSSQL, this version has been professionally migrated to **Aiven Cloud MySQL** and deployed on **Render**.
 
-# ✨ Features
-* 📝 Create, edit, delete, and organize sticky notes.
-* 🔄 Offline-first architecture powered by IndexedDB.
-* ☁️ Automatic synchronization when internet connectivity is restored.
-* 🔐 JWT authentication with HTTP-only cookie security.
-* 🌐 Google OAuth 2.0 login integration.
-* 📦 Dockerized MSSQL setup for easy local development.
-* ⚡ Advanced OData-style query filtering system.
-* 🎯 Draggable sticky-note UI using jQuery UI.
-* 🔑 Secure password hashing using bcrypt.
+---
 
-# 🚀 Key Engineering Highlights
+## ✨ Features
 
-## Offline-First Persistence
+- 📝 **Dynamic CRUD** — Full management of sticky notes with real-time UI updates.
+- 🔄 **Offline-First Logic** — Powered by IndexedDB for seamless offline functionality.
+- ☁️ **Cloud Sync** — Automated background batch synchronization with MySQL.
+- 🔐 **Enterprise Authentication** — JWT-secured authentication using HttpOnly cookies for enhanced XSS protection.
+- ⚡ **Advanced Filtering** — Custom OData-style query engine for complex server-side searching.
+- 🎨 **Interactive UI** — Draggable sticky notes using jQuery UI with dark mode and categorization support.
 
-Implemented IndexedDB on the client side to allow users to continue working seamlessly even without an internet connection. All note operations are stored locally and synchronized automatically with the backend database once connectivity returns.
+---
 
-## Advanced Backend Query Engine
+## 🚀 Key Engineering Highlights
 
-Built a custom OData-style query parser capable of converting `$filter` expressions into SQL queries dynamically. This enables flexible and scalable data retrieval on the server side.
+### Database Migration (MSSQL → MySQL)
 
-### Example Query
+Successfully refactored the complete data layer from Microsoft SQL Server to MySQL. This included:
 
-```http
-GET /notes?$filter=title eq 'Work'
-```
+- Translating T-SQL syntax (`TOP`, `OFFSET`) into MySQL-compatible queries (`LIMIT`, `OFFSET`)
+- Updating parameter handling from named parameters to positional parameters
+- Creating transactional migration scripts for reliable data operations
 
-## Secure Authentication System
+### High-Performance Sync Engine
 
-Designed a multi-layer authentication system using:
+Implemented a custom `BatchManager` to manage dirty-state tracking in IndexedDB. The synchronization engine:
 
-* JWT (JSON Web Tokens)
-* HTTP-only cookies
-* Google OAuth 2.0
-* Bcrypt password hashing
+- Batches multiple user operations into a single API request
+- Minimizes unnecessary network traffic
+- Ensures transactional consistency and data integrity
 
-This setup improves protection against common attacks such as XSS and credential theft.
+### Secure Infrastructure
 
-## Containerized Database Infrastructure
+- **Database Hosting:** Aiven Cloud (Bangalore region) for low-latency performance
+- **Application Hosting:** Render with automated CI/CD deployment pipelines
+- **Security:** Configured secure CORS policies, protected session handling, and JWT authentication
 
-Configured Microsoft SQL Server using Docker Compose to ensure:
+---
 
-* Consistent local development
-* Easy environment setup
-* Reproducible deployments
+## 🛠️ Tech Stack
 
-## Scalable Backend Architecture
+### Frontend
+- Vanilla JavaScript
+- HTML5
+- Tailwind-style CSS
+- jQuery UI
+- IndexedDB
+- Axios
 
-Backend follows a modular CommonJS structure for better maintainability, scalability, and clean separation of concerns.
+### Backend
+- Node.js
+- Express.js v5
+- Passport.js
+- JWT Authentication
 
-# 🛠️ Tech Stack
+### Database
+- MySQL (Aiven Cloud)
 
-## Frontend
+### DevOps & Deployment
+- Docker
+- GitHub Actions
+- Render
 
-* Vanilla JavaScript
-* HTML5
-* CSS3
-* jQuery UI
-* IndexedDB
-* Axios
+---
 
-## Backend
+## ⚙️ Local Development Setup
 
-* Node.js
-* Express.js
-* Passport.js
-
-## Database
-
-* Microsoft SQL Server (MSSQL)
-
-## DevOps & Infrastructure
-
-* Docker
-* Docker Compose
-
-# 📂 Project Structure
+### 1. Clone Repository
 
 ```bash
-StickyPro/
-│
-├── client/                 # Frontend application
-├── server/                 # Backend API
-├── docker/                 # Docker configuration files
-├── database/               # SQL scripts and schemas
-├── .env
-├── docker-compose.yml
-└── README.md
+git clone https://github.com/ravipajiyar/Sticky-Notes.git
+cd Sticky-Notes/backend
 ```
 
-# ⚙️ Local Development Setup
-
-## 1. Prerequisites
-
-Make sure the following tools are installed:
-
-* Docker Desktop
-* Node.js (LTS version)
-* Git
-
-## 2. Clone the Repository
-
-```bash
-git clone https://github.com/your-username/stickypro.git
-
-cd stickypro
-```
-
-## 3. Database Setup (Docker)
-
-Ensure Docker is running, then execute:
-
-```bash
-docker-compose up -d
-```
-
-This will:
-
-* Pull the MSSQL Docker image
-* Start the SQL Server container
-* Initialize the required services
-
-To verify containers:
-
-```bash
-docker ps
-```
-
-## 4. Backend Setup
-
-Navigate to the server directory:
-
-```bash
-cd server
-```
-
-Install dependencies:
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-Create a `.env` file:
+### 3. Configure Environment Variables
+
+Create a `.env` file inside the `backend/` directory:
 
 ```env
-PORT=5000
+DB_HOST=your_aiven_host
+DB_PORT=24327
+DB_USER=avnadmin
+DB_PASSWORD=your_password
+DB_NAME=defaultdb
 
-DB_SERVER=localhost
-DB_PORT=1433
-DB_USER=sa
-DB_PASSWORD=yourStrongPassword
-DB_NAME=StickyPro
-
-JWT_SECRET=yourSecretKey
-
-GOOGLE_CLIENT_ID=yourGoogleClientId
-GOOGLE_CLIENT_SECRET=yourGoogleClientSecret
+JWT_SECRET=your_secret
+NODE_ENV=development
 ```
 
-Start the backend server:
-
-```bash
-npm run dev
-```
-
-## 5. Frontend Setup
-
-Navigate to the client directory:
-
-```bash
-cd client
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Run the frontend:
+### 4. Start Development Server
 
 ```bash
 npm start
 ```
 
-# 🔐 Authentication Flow
+---
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- HttpOnly cookie storage
+- Protected API routes
+- Secure CORS configuration
+- Offline-safe synchronization handling
+
+---
+
+## 📦 Deployment Architecture
 
 ```text
-User Login
-    ↓
-Server Validates Credentials
-    ↓
-JWT Generated
-    ↓
-Stored in HTTP-only Cookie
-    ↓
-Authenticated API Requests
+Frontend (Browser + IndexedDB)
+        ↓
+Node.js + Express API
+        ↓
+Aiven Cloud MySQL
+        ↓
+Hosted on Render
 ```
 
-# 🔄 Offline Synchronization Workflow
+---
 
-```text
-User Creates/Edits Notes
-          ↓
-Stored Locally in IndexedDB
-          ↓
-Internet Restored
-          ↓
-Background Sync Triggered
-          ↓
-Data Synced to MSSQL Server
-```
+## 👨‍💻 Author
 
-# 📸 Screenshots
+Developed by **Ravi Pajiyar** as a demonstration of enterprise-grade full-stack engineering concepts involving:
 
-> Add screenshots or GIF demonstrations here.
-
-Example:
-
-* Dashboard UI
-* Offline mode
-* Sync process
-* Authentication flow
-
-# 🧪 Future Improvements
-
-* Real-time collaboration
-* WebSocket-based live sync
-* Conflict resolution strategies
-* End-to-end encryption
-* Progressive Web App (PWA) support
-* Unit and integration testing
-
-# 🤝 Contributing
-
-Contributions are welcome.
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit changes
-4. Push your branch
-5. Open a Pull Request
-
-# 📄 License
-
-This project is licensed under the MIT License.
-
-# 👨‍💻 Author
-
-Developed by **Ravi Pajiyar** as a demonstration of enterprise-grade full-stack engineering concepts involving offline-first systems, secure authentication, containerized infrastructure, and scalable backend architecture.
+- Offline-first systems
+- Secure authentication flows
+- Cloud database migration
+- Containerized infrastructure
+- Scalable backend architecture
+- Synchronization systems
+- Production-ready deployment pipelines

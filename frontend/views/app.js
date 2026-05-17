@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
             this.delay = delay;
             this.timeoutId = null;
             this.isProcessing = false;
-            console.log('BatchManager: Initializing...');
             
             this.dbInitialized = false;
             this.pendingOperations = [];
@@ -14,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
             this.dbInitPromise = this.setupIndexedDB();
             
             this.dbInitPromise.then(() => {
-                console.log('BatchManager: Database ready, scheduling initial processing');
                 this.processUpdates();
             }).catch(err => {
                 console.error('BatchManager: Failed to initialize database:', err);
@@ -23,13 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
     
         async setupIndexedDB() {
             try {
-                console.log('BatchManager: Starting database initialization');
                 this.initRetryCount++;
                 
                 const dbName = 'NotesDB';
                 
                 this.db = await new Promise((resolve, reject) => {
-                    console.log(`BatchManager: Opening database ${dbName}...`);
                     
                     const timeoutId = setTimeout(() => {
                         console.error('BatchManager: Database open request timed out');
@@ -53,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         
                         request.onupgradeneeded = (event) => {
                             const db = event.target.result;
-                            console.log('BatchManager: Creating database schema');
                             
                             try {
                                 // Create notes store with noteId as key
@@ -61,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 
                                 // Create index for status queries
                                 store.createIndex('status', 'status', { unique: false });
-                                console.log('BatchManager: Created notes store with noteId as key');
                             } catch (error) {
                                 console.error('BatchManager: Error during schema creation:', error);
                             }
@@ -70,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         request.onsuccess = (event) => {
                             clearTimeout(timeoutId);
                             const db = event.target.result;
-                            console.log('BatchManager: IndexedDB connected successfully', db);
                             
                             // Enable debugging on the database connection
                             db.onerror = (event) => {
@@ -88,15 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Skip the test query - it's causing issues in some environments
                 this.dbInitialized = true;
-                console.log('BatchManager: Database initialized successfully');
-                
-                // Process any pending operations
-                console.log(`BatchManager: Processing ${this.pendingOperations.length} pending operations`);
+
                 while (this.pendingOperations.length > 0) {
                     const operation = this.pendingOperations.shift();
                     try {
                         await operation();
-                        console.log('BatchManager: Successfully processed pending operation');
                     } catch (err) {
                         console.error('BatchManager: Error processing pending operation:', err);
                     }
@@ -113,7 +102,6 @@ document.addEventListener('DOMContentLoaded', function () {
         async waitForDB(timeout = 5000) {
             if (this.dbInitialized) return true;
             
-            console.log('BatchManager: Waiting for database initialization...');
             try {
                 // Add a timeout to prevent infinite waiting
                 const result = await Promise.race([
@@ -123,14 +111,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     )
                 ]);
                 
-                console.log('BatchManager: Database ready after waiting');
                 return this.dbInitialized;
             } catch (error) {
                 console.error('BatchManager: Error waiting for database:', error);
                 
                 // If we got a timeout error, attempt to reinitialize
                 if (error.message === 'Database initialization timeout') {
-                    console.log('BatchManager: Timeout occurred, attempting to reinitialize database');
                     this.dbInitPromise = this.setupIndexedDB();
                 }
                 
@@ -140,15 +126,12 @@ document.addEventListener('DOMContentLoaded', function () {
     
         // Save or update note
         async saveToDB(noteId, updates) {
-            console.log(`BatchManager: Saving to DB - Note ID: ${noteId}`, updates);
             
             // If DB isn't ready, queue the operation
             if (!this.dbInitialized) {
-                console.log('BatchManager: Database not ready, queueing operation for later');
                 return new Promise((resolve, reject) => {
                     this.pendingOperations.push(async () => {
                         try {
-                            console.log(`BatchManager: Processing queued operation for note: ${noteId}`);
                             await this._saveToDB(noteId, updates);
                             resolve();
                         } catch (error) {
@@ -178,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 
                 try {
-                    console.log(`BatchManager: Creating transaction for note: ${noteId}`);
                     let transaction;
                     try {
                         transaction = this.db.transaction(['notes'], 'readwrite');
@@ -189,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     
                     transaction.oncomplete = () => {
-                        console.log(`BatchManager: Transaction completed successfully for note: ${noteId}`);
+                        
                     };
                     
                     transaction.onerror = (event) => {
@@ -197,11 +179,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         reject(event.target.error);
                     };
                     
-                    console.log('BatchManager: Getting object store');
+                   
                     const store = transaction.objectStore('notes');
                     
-                    // First check if the note already exists
-                    console.log(`BatchManager: Checking if note ${noteId} exists`);
+
                     const getRequest = store.get(noteId);
                     
                     getRequest.onsuccess = (event) => {
@@ -211,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         let noteRecord;
                         
                         if (existingNote) {
-                            console.log(`BatchManager: Updating existing note: ${noteId}`, existingNote);
+                            
                             // Update existing note
                             noteRecord = {
                                 ...existingNote,
@@ -220,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 status: 'NotSynced'
                             };
                         } else {
-                            console.log(`BatchManager: Creating new note: ${noteId}`);
+                            
                             // Create new note with dateCreated
                             const dateCreated = new Date().toISOString();
                             noteRecord = {
@@ -234,12 +215,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         
                         // Log the actual record 
-                        console.log('💾 BatchManager: Saving note:', JSON.stringify(noteRecord));
+                       
                         
                         const putRequest = store.put(noteRecord);
                         
                         putRequest.onsuccess = (event) => {
-                            console.log(`BatchManager: Note ${noteId} saved successfully with key:`, event.target.result);
+                            
                             
                             // Increment the batch size counter
                             this.batchSize++;
@@ -269,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         async processUpdates() {
-            console.log('BatchManager: processUpdates called');
+            
             
             const dbReady = await this.waitForDB(5000);
             if (!dbReady) {
@@ -278,19 +259,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             if (this.isProcessing) {
-                console.log('BatchManager: Already processing updates, skipping');
+                
                 return;
             }
             
             this.isProcessing = true;
-            console.log('BatchManager: Starting to process updates...');
+            
         
             try {
                 const unsynced = await this.getUnsyncedNotes();
-                console.log('BatchManager: Processing updates, found:', unsynced.length, 'unsynced notes');
                 
                 if (unsynced.length === 0) {
-                    console.log('BatchManager: No updates to process');
+                    
                     this.isProcessing = false;
                     return;
                 }
@@ -313,13 +293,13 @@ document.addEventListener('DOMContentLoaded', function () {
         
                 // Check if we have any valid updates to send
                 if (batchUpdates.length === 0) {
-                    console.log('BatchManager: No valid updates to process after filtering');
+                    
                     this.isProcessing = false;
                     return;
                 }
         
                 try {
-                    console.log('📤 BatchManager: Sending batch update for', batchUpdates.length, 'notes');
+                   
                     // Send all updates in a single batch request
                     const response = await this.sendBatchToServer(batchUpdates);
                     
@@ -330,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     await Promise.all(
                         response.successfulNotes.map(async (noteId) => {
                             await this.updateNoteStatus(noteId, 'Synced');
-                            console.log(`BatchManager: Marked ${noteId} as synced`);
+                            
                         })
                     );
         
@@ -352,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     );
                 }
                 
-                console.log('BatchManager: Finished processing batch updates');
+                
             } catch (error) {
                 console.error('BatchManager: Error in processUpdates:', error);
             } finally {
@@ -362,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     
         async sendBatchToServer(notes) {
-            console.log('BatchManager: Sending batch to server:', notes);
+           
             
             try {
                 const token = localStorage.getItem('token');
@@ -391,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
         async queueUpdate(noteId, updates) {
             try {
                 const startTime = Date.now();
-                console.log(`BatchManager: Queueing update for ${noteId} at ${new Date().toISOString()}`);
+               
                 
                 const dbReady = await this.waitForDB(10000);
                 if (!dbReady) {
@@ -399,17 +379,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw new Error('Database not ready');
                 }
                 
-                console.log(`BatchManager: Saving note ${noteId} (waited ${Date.now() - startTime}ms)`);
+                
                 await this.saveToDB(noteId, updates);
                 
-                console.log(`BatchManager: Successfully queued update for ${noteId}`);
+                
                 // No need to call scheduleProcessing here as it's called in saveToDB
             } catch (error) {
                 console.error(`BatchManager: Error queueing update for ${noteId}:`, error);
                 this.showNotification(`Failed to queue update. Will retry...`, 'error');
                 
                 setTimeout(() => {
-                    console.log(`BatchManager: Retrying failed queue for ${noteId}`);
+                 
                     this.queueUpdate(noteId, updates).catch(err => {
                         console.error(`BatchManager: Retry failed for ${noteId}:`, err);
                     });
@@ -427,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             return new Promise((resolve, reject) => {
                 try {
-                    console.log('BatchManager: Querying for unsynced notes...');
+                    
                     const transaction = this.db.transaction(['notes'], 'readonly');
                     const store = transaction.objectStore('notes');
                     
@@ -476,7 +456,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         const putRequest = store.put(note);
                         
                         putRequest.onsuccess = () => {
-                            console.log(`BatchManager: Updated note ${noteId} status to ${status}`);
                             resolve();
                         };
                         
@@ -511,14 +490,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 if (currentNote.retryCount >= 5) {
                     // Permanent failure - mark as failed but keep the note
-                    console.log('BatchManager: Max retries reached for note:', note.noteId, 'marking as SyncFailed');
                     currentNote.status = 'SyncFailed';
                     this.showNotification(`Update for note ${currentNote.noteId} failed permanently`, 'error');
                 } else {
                     // Increment retry count and mark as NotSynced again
                     currentNote.retryCount++;
                     currentNote.status = 'NotSynced';
-                    console.log('BatchManager: Incrementing retry count for note:', note.noteId, 'new count:', currentNote.retryCount);
                 }
                 
                 store.put(currentNote);
@@ -535,7 +512,6 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // If we've accumulated enough notes, process immediately
             if (this.batchSize >= MAX_BATCH_SIZE) {
-                console.log(`BatchManager: Batch size (${this.batchSize}) reached threshold, processing immediately`);
                 // Small delay to allow transaction to complete
                 setTimeout(() => {
                     this.processUpdates().catch(err => {
@@ -545,10 +521,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             
-            // Otherwise, schedule normal processing with delay
-            console.log(`BatchManager: Scheduling processing in ${this.delay}ms, current batch size: ${this.batchSize}`);
             this.timeoutId = setTimeout(() => {
-                console.log('BatchManager: Executing scheduled processing');
                 this.processUpdates().catch(err => {
                     console.error('BatchManager: Error during scheduled processing:', err);
                 });
@@ -557,9 +530,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
         scheduleRetry() {
             const retryDelay = 30000;
-            console.log(`BatchManager: Scheduling retry in ${retryDelay}ms`);
             setTimeout(() => {
-                console.log('BatchManager: Executing retry processing');
                 this.processUpdates().catch(err => {
                     console.error('BatchManager: Error during retry processing:', err);
                 });
@@ -913,7 +884,6 @@ function filterNotes() {
             : searchFilter;
     }
     
-    console.log("Combined OData Filter:", odataFilter);
     
     // Reset pagination
     currentPage = 1;
@@ -925,7 +895,6 @@ function filterNotes() {
 
 // Fixed filterNotesByCategory function
 function filterNotesByCategory(category) {
-    console.log('Filtering by category:', category);
     
     // Store current category in sessionStorage
     sessionStorage.setItem('currentCategory', category);
@@ -951,7 +920,6 @@ function filterNotesByCategory(category) {
             : searchFilter;
     }
     
-    console.log('Generated OData filter:', odataFilter);
     
     // Reset pagination
     currentPage = 1;
@@ -1015,8 +983,6 @@ function filterNotesByCategory(category) {
                 const encodedFilter = encodeURIComponent(odataFilter);
                 url += `&$filter=${encodedFilter}`;
             }
-    
-            console.log(`Loading notes with URL: ${url}`);
     
             const response = await fetch(url, {
                 method: 'GET',

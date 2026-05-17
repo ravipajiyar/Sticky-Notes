@@ -203,14 +203,11 @@
     
         // Authentication Check with Cookie
         const checkAuthStatus = async () => {
-            console.log("Checking authentication status...");
             try {
                 const response = await axios.post('http://localhost:3001/auth/google/token', {}, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
-                    // User is authenticated
-                    console.log("User is authenticated");
                     appContainer.classList.add('authenticated');  // Show app if authenticated
                     appContainer.style.display = 'flex'; // Ensure it's displayed
                     statusBar.textContent = 'Connected to StickyNotes+ service';
@@ -220,12 +217,10 @@
                         // Use displayName if available, otherwise username
                         const displayedName = response.data.user.displayName || response.data.user.username;
                         usernameElement.textContent = displayedName;
-                        console.log("Username updated:", displayedName);
                     }
                 }
             } catch (error) {
                 // Authentication failed
-                console.log("User is not authenticated", error);
                 window.location.href = 'auth.html';
             }
         };

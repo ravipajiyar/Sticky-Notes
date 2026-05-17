@@ -987,9 +987,9 @@ function filterNotesByCategory(category) {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'X-Request-ID': `LoadNotes-Page${page}${category ? '-' + category : ''}${odataFilter ? '-Filtered' : ''}`
-                }
+                },
+                credentials: 'include' // <--- THIS TELLS THE BROWSER TO SEND THE SECURE COOKIE
             });
     
             if (response.ok) {
@@ -1283,7 +1283,7 @@ function filterNotesByCategory(category) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'X-Request-ID': 'CreateNewEmptyNote' // Adding identifier for new empty note creation
                 },
                 body: JSON.stringify({
@@ -1296,7 +1296,8 @@ function filterNotesByCategory(category) {
                     position: null,
                     width: '',
                     height: ''
-                })
+                }),
+                credentials: 'include' // <--- MANDATORY FOR SECURE COOKIES
             });
             
             if (response.ok) {

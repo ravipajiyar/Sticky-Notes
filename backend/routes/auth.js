@@ -10,86 +10,158 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
+const jwtSecret = process.env.JWT_SECRET || "dev-only-secret-change-me";
+const backendBaseUrl = (
+  process.env.BACKEND_URL ||
+  (isProduction ? "https://sticky-notes-pro.onrender.com" : "http://localhost:3001")
+).replace(/\/$/, "");
+const frontendBaseUrl = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: isProduction
-        ? "https://sticky-notes-pro.onrender.com/auth/google/callback"
-        : "http://localhost:3001/auth/google/callback",
-    },
-    async function (accessToken, refreshToken, profile, done) {
-      try {
-        const pool = await connectDB();
+const googleConfigured = Boolean(
+  process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    !/replace|your-google/i.test(
+      `${process.env.GOOGLE_CLIENT_ID} ${process.env.GOOGLE_CLIENT_SECRET}`,
+    ),
+);
 
-        // MySQL: Using LIMIT 1 instead of TOP 1
-        const [users] = await pool.query(
-          "SELECT * FROM users WHERE googleId = ? LIMIT 1",
-          [profile.id],
-        );
+const googleCallbackUrl =
+  process.env.GOOGLE_CALLBACK_URL ||
+  (isProduction && frontendBaseUrl
+    ? `${frontendBaseUrl}/auth/google/callback`
+    : `${backendBaseUrl}/auth/google/callback`);
 
-        if (users.length > 0) {
-          return done(null, users[0]);
+const loginRedirectUrl = frontendBaseUrl
+  ? `${frontendBaseUrl}/index.html`
+  : "/index.html";
+const failureRedirectUrl = `${frontendBaseUrl || ""}/auth.html?error=Google%20authentication%20failed`;
+
+function cookieOptions() {
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
+function createToken(user) {
+  return jwt.sign(
+    { id: user.id, username: user.username },
+    jwtSecret,
+    { expiresIn: "1000h" },
+  );
+}
+
+if (googleConfigured) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: googleCallbackUrl,
+      },
+      async function (accessToken, refreshToken, profile, done) {
+        try {
+          const pool = await connectDB();
+
+          const [users] = await pool.query(
+            "SELECT * FROM users WHERE googleId = ? LIMIT 1",
+            [profile.id],
+          );
+
+          if (users.length > 0) {
+            return done(null, users[0]);
+          }
+
+          const email =
+            profile.emails && profile.emails[0] && profile.emails[0].value;
+          const username = email || `google_user_${profile.id}`;
+          const randomPassword = Math.random().toString(36).slice(-10);
+          const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+          let newUserId;
+          try {
+            const [result] = await pool.query(
+              "INSERT INTO users (username, password, googleId, displayName) VALUES (?, ?, ?, ?)",
+              [username, hashedPassword, profile.id, profile.displayName || ""],
+            );
+            newUserId = result.insertId;
+          } catch (insertError) {
+            if (!/duplicate|unique/i.test(insertError.message)) throw insertError;
+
+            const [existingByEmail] = await pool.query(
+              "SELECT * FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
+              [username],
+            );
+            if (existingByEmail.length === 0) throw insertError;
+
+            await pool.query(
+              "UPDATE users SET googleId = ?, displayName = COALESCE(NULLIF(displayName, ''), ?) WHERE id = ?",
+              [profile.id, profile.displayName || "", existingByEmail[0].id],
+            );
+            newUserId = existingByEmail[0].id;
+          }
+
+          const [newUser] = await pool.query(
+            "SELECT * FROM users WHERE id = ?",
+            [newUserId],
+          );
+          return done(null, newUser[0]);
+        } catch (error) {
+          console.error("Error during Google auth:", error);
+          return done(error, null);
         }
+      },
+    ),
+  );
+}
 
-        const username = profile.emails[0].value || `google_user_${profile.id}`;
-        const randomPassword = Math.random().toString(36).slice(-10);
-        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+router.get("/providers", (req, res) => {
+  res.status(200).json({ google: googleConfigured });
+});
 
-        const [result] = await pool.query(
-          "INSERT INTO users (username, password, googleId, displayName) VALUES (?, ?, ?, ?)",
-          [username, hashedPassword, profile.id, profile.displayName || ""],
-        );
-
-        const [newUser] = await pool.query("SELECT * FROM users WHERE id = ?", [
-          result.insertId,
-        ]);
-        return done(null, newUser[0]);
-      } catch (error) {
-        console.error("Error during Google auth:", error);
-        return done(error, null);
-      }
-    },
-  ),
-);
-
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] }),
-);
+router.get("/google", (req, res, next) => {
+  if (!googleConfigured) {
+    return res.redirect(`${frontendBaseUrl || ""}/auth.html?error=Google%20login%20is%20not%20configured`);
+  }
+  return passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next,
+  );
+});
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: "/auth.html?error=Google%20authentication%20failed",
-  }),
+  (req, res, next) => {
+    if (!googleConfigured) {
+      return res.redirect(`${frontendBaseUrl || ""}/auth.html?error=Google%20login%20is%20not%20configured`);
+    }
+    return passport.authenticate("google", {
+      session: false,
+      failureRedirect: failureRedirectUrl,
+    })(req, res, next);
+  },
   async function (req, res) {
-    const token = jwt.sign(
-      { id: req.user.id, username: req.user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1000h" },
-    );
+    const token = createToken(req.user);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "None" : "Lax",
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    });
-
-    res.redirect("/index.html");
+    res.cookie("token", token, cookieOptions());
+    res.redirect(loginRedirectUrl);
   },
 );
 
-router.post("/google/token", async (req, res) => {
-  const token = req.cookies.token;
-  if (!token) return res.status(400).json({ message: "Token is required" });
+async function handleCurrentUser(req, res) {
+  const bearer = req.headers.authorization;
+  const token =
+    req.cookies.token ||
+    (bearer && bearer.startsWith("Bearer ") ? bearer.slice(7) : null);
+
+  if (!token) return res.status(401).json({ message: "Not authenticated" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
     const pool = await connectDB();
     const [users] = await pool.query(
       "SELECT id, username, displayName FROM users WHERE id = ?",
@@ -99,30 +171,44 @@ router.post("/google/token", async (req, res) => {
     if (users.length === 0)
       return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Token is valid",
       user: users[0],
-      token: token,
     });
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Invalid token" });
   }
-});
+}
+
+router.get("/me", handleCurrentUser);
+router.post("/google/token", handleCurrentUser);
 
 router.post("/signup", async (req, res) => {
-  const { username, password } = req.body;
+  const username =
+    typeof req.body.username === "string" ? req.body.username.trim() : "";
+  const password =
+    typeof req.body.password === "string" ? req.body.password : "";
+
   if (!username || !password)
-    return res.status(400).json({ message: "Missing credentials" });
+    return res.status(400).json({ message: "Username and password are required" });
+
+  if (username.length > 255)
+    return res.status(400).json({ message: "Username is too long" });
+
+  if (password.length < 6)
+    return res
+      .status(400)
+      .json({ message: "Password must be at least 6 characters" });
 
   try {
     const pool = await connectDB();
     const [existing] = await pool.query(
-      "SELECT * FROM users WHERE username = ? LIMIT 1",
+      "SELECT id FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
       [username],
     );
 
     if (existing.length > 0)
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(409).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
@@ -130,53 +216,53 @@ router.post("/signup", async (req, res) => {
       [username, hashedPassword],
     );
 
-    const token = jwt.sign(
-      { id: result.insertId, username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1000h" },
-    );
-    res
-      .status(201)
-      .json({ message: "User created successfully", token: token });
+    const user = { id: result.insertId, username };
+    const token = createToken(user);
+    res.cookie("token", token, cookieOptions());
+
+    res.status(201).json({
+      message: "Account created successfully",
+      token,
+      username,
+    });
   } catch (error) {
+    if (/duplicate|unique/i.test(error.message)) {
+      return res.status(409).json({ message: "User already exists" });
+    }
     res.status(500).json({ message: "Signup failed", error: error.message });
   }
 });
 
 router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  const username =
+    typeof req.body.username === "string" ? req.body.username.trim() : "";
+  const password =
+    typeof req.body.password === "string" ? req.body.password : "";
+
+  if (!username || !password)
+    return res.status(400).json({ message: "Username and password are required" });
+
   try {
     const pool = await connectDB();
     const [users] = await pool.query(
-      "SELECT * FROM users WHERE username = ? LIMIT 1",
+      "SELECT * FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
       [username],
     );
     const user = users[0];
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid username or password" });
     }
 
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1000h" },
-    );
+    const token = createToken(user);
+    res.cookie("token", token, cookieOptions());
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "None" : "Lax",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+    res.status(200).json({
+      message: "Logged in successfully",
+      token,
+      username: user.username,
+      displayName: user.displayName || user.username,
     });
-
-    res
-      .status(200)
-      .json({
-        message: "Logged in successfully",
-        token: token,
-        username: username,
-      });
   } catch (error) {
     res.status(500).json({ message: "Login failed", error: error.message });
   }
@@ -186,7 +272,8 @@ router.post("/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "None" : "Lax",
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
   });
   res.status(200).json({ message: "Logged out" });
 });

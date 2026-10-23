@@ -345,13 +345,13 @@ document.addEventListener('DOMContentLoaded', function () {
            
             
             try {
-                const token = localStorage.getItem('token');
                 const response = await fetch('/notes/batch-update', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Request-ID': `BatchUpdate-${Date.now()}`
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ updates: notes })
                 });
     
@@ -746,36 +746,6 @@ function importNotes(event) {
     }
 }
 
-    async function importNotes(event) {
-        try {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const importedNotes = JSON.parse(e.target.result);
-                    
-                    // Show confirmation dialog
-                    await loadNotes();
-                    showNotification('Notes imported successfully!', 'success');
-                } catch (error) {
-                    console.error('Error parsing imported notes:', error);
-                    showNotification('Invalid file format. Please use a proper JSON export.', 'error');
-                }
-                
-                // Reset the file input
-                importNotesInput.value = '';
-            };
-            reader.readAsText(file);
-        } catch (error) {
-            console.error('Error importing notes:', error);
-            showNotification('Failed to import notes. Please try again.', 'error');
-            // Reset the file input
-            importNotesInput.value = '';
-        }
-    }
-
     async function updateNoteOnServer(noteData) {
         try {
             // Convert position string back to object if needed
@@ -787,9 +757,9 @@ function importNotes(event) {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'X-Request-ID': `UpdateNote-${noteData.id}`
                 },
+                credentials: 'include',
                 body: JSON.stringify(noteData)
             });
 
@@ -815,9 +785,9 @@ function importNotes(event) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'X-Request-ID': 'CreateNewNote'
                 },
+                credentials: 'include',
                 body: JSON.stringify(newNoteData)
             });
 
@@ -897,6 +867,11 @@ function filterNotesByCategory(category) {
     
     // Store current category in sessionStorage
     sessionStorage.setItem('currentCategory', category);
+
+    const sectionHeading = document.querySelector('.header-title h2');
+    if (sectionHeading) {
+        sectionHeading.textContent = category || 'All Notes';
+    }
     
     let odataFilter = '';
     if (category && category !== 'All Notes' && category !== 'Recent') {
@@ -991,6 +966,11 @@ function filterNotesByCategory(category) {
                 credentials: 'include' // <--- THIS TELLS THE BROWSER TO SEND THE SECURE COOKIE
             });
     
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = 'auth.html';
+                return;
+            }
+
             if (response.ok) {
                 const data = await response.json();
                 let savedNotes = data.notes;
@@ -1144,9 +1124,9 @@ function filterNotesByCategory(category) {
                 const response = await fetch(`/notes/delete/${noteId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'X-Request-ID': `DeleteNote-${noteId}` // Adding identifier for note deletion
-                    }
+                        'X-Request-ID': `DeleteNote-${noteId}`
+                    },
+                    credentials: 'include'
                 });
 
                 if (response.ok) {

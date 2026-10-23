@@ -1,0 +1,8 @@
+backend/
+.git/
+.gitignore
+docker-compose.yml
+render.yaml
+**/node_modules/
+**/.env
+.env

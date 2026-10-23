@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Sticky Notes</title>
+    <title>StickyPro · Your Notes</title>
     <link rel="stylesheet" href="style.css" />
     <link
       rel="stylesheet"
@@ -26,7 +26,6 @@
         display: none;
         flex-direction: row;
         min-height: 100vh;
-        display: flex;
       }
       .notification {
         position: fixed;
@@ -113,23 +112,33 @@
       <!-- Main Content -->
       <main class="main-content">
         <div class="header">
+          <div class="mobile-topbar">
+            <img src="stickynote.png" alt="StickyPro" class="mobile-logo" />
+            <span>StickyPro</span>
+          </div>
           <div class="header-top">
+            <div class="header-title">
+              <h2>All notes</h2>
+              <p>Capture, organize, and sync your ideas.</p>
+            </div>
             <div class="controls">
               <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
                 <input
                   type="text"
                   class="search-bar"
                   placeholder="Search notes..."
+                  aria-label="Search notes"
                 />
               </div>
               <div class="user-info">
                 <img src="person.png" alt="User" class="user-avatar" />
-                <span class="username">User Name</span>
+                <span class="username">Loading...</span>
               </div>
-              <div class="dark-mode-toggle">
+              <button type="button" class="dark-mode-toggle" aria-label="Toggle dark mode">
                 <i class="fa fa-moon"></i>
                 <div class="toggle-switch"></div>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -198,8 +207,6 @@
               try {
                 await axios.post("/auth/logout", {}, { withCredentials: true });
               } catch (e) {}
-              document.cookie = "token=; max-age=0; path=/;";
-              localStorage.removeItem("darkMode");
               showNotification("Logged out successfully!", "success");
               setTimeout(() => (window.location.href = "auth.html"), 1000);
             });
@@ -208,17 +215,13 @@
         const checkAuthStatus = async () => {
           try {
             // FIXED: Relative URL for check status
-            const response = await axios.post(
-              "/auth/google/token",
-              {},
-              {
-                withCredentials: true,
-              },
-            );
+            const response = await axios.get("/auth/me", {
+              withCredentials: true,
+            });
             if (response.status === 200) {
               appContainer.classList.add("authenticated");
               appContainer.style.display = "flex";
-              statusBar.textContent = "Connected to StickyNotes+ service";
+              statusBar.textContent = "Connected to StickyPro service";
               if (response.data && response.data.user) {
                 const displayedName =
                   response.data.user.displayName || response.data.user.username;

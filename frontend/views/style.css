@@ -2357,3 +2357,293 @@ body.dark-mode .text-color-toggle.active {
     align-items: center;
     margin-left: 20px;
 }
+/* ============================================================
+   StickyPro UI refresh (final overrides)
+   ============================================================ */
+
+.mobile-topbar {
+    display: none;
+}
+
+.header {
+    padding: 18px 26px;
+}
+
+.header-title h2 {
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+    color: var(--header-text);
+}
+
+.header-title p {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+}
+
+.header-top {
+    gap: 18px;
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.search-bar {
+    padding-left: 40px !important;
+}
+
+button.dark-mode-toggle {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    color: var(--icon-color);
+}
+
+.user-info {
+    background: var(--search-bg);
+    border: 1px solid var(--border-color);
+    padding: 5px 12px 5px 6px;
+}
+
+.username {
+    color: var(--header-text);
+}
+
+.notes-grid {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 26px;
+    gap: 22px;
+}
+
+.note {
+    margin: 0;
+    border-radius: 16px;
+    border: 1px solid rgba(23, 32, 51, 0.06);
+    box-shadow:
+        0 1px 2px rgba(23, 32, 51, 0.06),
+        0 10px 24px rgba(23, 32, 51, 0.07);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.note:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 2px 4px rgba(23, 32, 51, 0.06),
+        0 18px 36px rgba(23, 32, 51, 0.12);
+}
+
+.note.dragging {
+    transform: rotate(-1.5deg) scale(1.02);
+    box-shadow: 0 24px 48px rgba(23, 32, 51, 0.22);
+    z-index: 50;
+}
+
+.note-header {
+    padding: 11px 13px;
+    border-bottom: 1px solid rgba(23, 32, 51, 0.07);
+}
+
+.note-title {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.note-content {
+    line-height: 1.65;
+    padding: 12px 14px;
+}
+
+.note-footer {
+    padding: 8px 12px;
+}
+
+.pin-note,
+.delete-note,
+.color-toggle,
+.text-color-toggle {
+    border-radius: 9px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pin-note:hover,
+.delete-note:hover,
+.color-toggle:hover,
+.text-color-toggle:hover {
+    transform: translateY(-1px);
+}
+
+.note.pinned {
+    outline: 2px solid rgba(246, 173, 85, 0.6);
+    outline-offset: -2px;
+}
+
+.floating-add-button {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #5b5bd6 0%, #7c5cf0 100%);
+    box-shadow: 0 14px 28px rgba(91, 91, 214, 0.34);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floating-add-button:hover {
+    transform: translateY(-2px) rotate(90deg);
+    box-shadow: 0 18px 34px rgba(91, 91, 214, 0.4);
+}
+
+.status-bar {
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.no-notes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 280px;
+    padding: 48px 24px;
+    border: 1.5px dashed var(--border-color);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.35);
+    color: var(--text-muted);
+    font-size: 0.98rem;
+}
+
+.no-notes::before {
+    content: "\f249";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 2.1rem;
+    color: var(--primary-color);
+    opacity: 0.55;
+}
+
+.dark-mode .no-notes {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.loading-indicator {
+    background: var(--header-bg);
+    border: 1px solid var(--border-color);
+    color: var(--header-text);
+    box-shadow: 0 12px 32px rgba(23, 32, 51, 0.16);
+}
+
+.notification {
+    border-radius: 12px;
+    box-shadow: 0 14px 30px rgba(23, 32, 51, 0.18);
+    animation: notification-in 0.25s ease both;
+}
+
+@keyframes notification-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+    .mobile-topbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 0 12px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 12px;
+        font-weight: 700;
+        color: var(--header-text);
+    }
+
+    .mobile-logo {
+        height: 32px;
+        width: auto;
+    }
+
+    .header {
+        padding: 14px 16px;
+    }
+
+    .header-title {
+        text-align: center;
+        width: 100%;
+    }
+
+    .header-title p {
+        display: none;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .controls {
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+
+    .search-container {
+        flex: 1 1 auto;
+        max-width: none;
+        order: 0;
+    }
+
+    .user-info {
+        flex: 0 0 auto;
+    }
+
+    .notes-grid {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .sidebar-nav ul {
+        overflow-x: auto;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 0 8px;
+        scrollbar-width: none;
+    }
+
+    .sidebar-nav ul::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar-nav li {
+        flex: 0 0 auto;
+    }
+
+    .sidebar-nav a,
+    .sidebar-nav label.import-notes-label {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .username {
+        display: none;
+    }
+
+    .user-info {
+        padding: 4px;
+    }
+
+    .note {
+        border-radius: 14px;
+    }
+}

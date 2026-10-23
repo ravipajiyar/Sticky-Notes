@@ -29,15 +29,15 @@ router.post("/", authenticateToken, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.user.id,
-        title || "New Note",
+        title ?? "New Note",
         category || "Personal",
-        content || "",
+        content ?? "",
         color || "yellow",
         pinned ? 1 : 0,
         textColor || "#000000",
         position ? JSON.stringify(position) : null,
-        width || "",
-        height || "",
+        width ?? "",
+        height ?? "",
       ],
     );
 
@@ -86,7 +86,7 @@ router.get("/list", authenticateToken, async (req, res) => {
       `SELECT COUNT(*) as total FROM notes ${whereClause}`,
       values,
     );
-    const totalNotes = countRows[0].total;
+    const totalNotes = Number(countRows[0].total) || 0;
 
     // MySQL uses LIMIT ? OFFSET ? instead of OFFSET / FETCH
     const [rows] = await pool.query(
@@ -137,6 +137,9 @@ router.get("/:id", authenticateToken, async (req, res) => {
 router.post("/batch-update", authenticateToken, async (req, res) => {
   const requestId = getRequestIdentifier(req);
   const { updates } = req.body;
+  if (!Array.isArray(updates)) {
+    return res.status(400).json({ requestId, message: "updates must be an array" });
+  }
   const pool = await connectDB();
   const connection = await pool.getConnection();
   const results = { successfulNotes: [], failedNotes: [] };
@@ -154,27 +157,30 @@ router.post("/batch-update", authenticateToken, async (req, res) => {
         if (existing.length === 0) throw new Error("Note not found");
 
         const current = existing[0];
-        const pos = update.position
-          ? JSON.stringify(update.position)
-          : current.position;
+        const pos =
+          update.position !== undefined
+            ? update.position
+              ? JSON.stringify(update.position)
+              : null
+            : current.position;
 
         await connection.query(
           `UPDATE notes SET title=?, category=?, content=?, color=?, pinned=?, textColor=?, position=?, width=?, height=? 
                      WHERE id=? AND userId=?`,
           [
-            update.title || current.title,
-            update.category || current.category,
-            update.content || current.content,
-            update.color || current.color,
+            update.title ?? current.title,
+            update.category ?? current.category,
+            update.content ?? current.content,
+            update.color ?? current.color,
             update.pinned !== undefined
               ? update.pinned
                 ? 1
                 : 0
               : current.pinned,
-            update.textColor || current.textColor,
+            update.textColor ?? current.textColor,
             pos,
-            update.width || current.width,
-            update.height || current.height,
+            update.width ?? current.width,
+            update.height ?? current.height,
             update.noteId,
             req.user.id,
           ],
@@ -210,27 +216,30 @@ router.put("/update/:id", authenticateToken, async (req, res) => {
 
     const current = existing[0];
     const updates = req.body;
-    const pos = updates.position
-      ? JSON.stringify(updates.position)
-      : current.position;
+    const pos =
+      updates.position !== undefined
+        ? updates.position
+          ? JSON.stringify(updates.position)
+          : null
+        : current.position;
 
     await pool.query(
       `UPDATE notes SET title=?, category=?, content=?, color=?, pinned=?, textColor=?, position=?, width=?, height=? 
              WHERE id=? AND userId=?`,
       [
-        updates.title || current.title,
-        updates.category || current.category,
-        updates.content || current.content,
-        updates.color || current.color,
+        updates.title ?? current.title,
+        updates.category ?? current.category,
+        updates.content ?? current.content,
+        updates.color ?? current.color,
         updates.pinned !== undefined
           ? updates.pinned
             ? 1
             : 0
           : current.pinned,
-        updates.textColor || current.textColor,
+        updates.textColor ?? current.textColor,
         pos,
-        updates.width || current.width,
-        updates.height || current.height,
+        updates.width ?? current.width,
+        updates.height ?? current.height,
         req.params.id,
         req.user.id,
       ],

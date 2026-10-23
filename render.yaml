@@ -1,0 +1,49 @@
+# Render Blueprint: API (Node) + PostgreSQL database
+#
+# 1. Push this file to GitHub.
+# 2. Render Dashboard -> New + -> Blueprint -> select this repository.
+# 3. Set FRONTEND_URL to your Vercel URL (for example https://sticky-pro.vercel.app).
+# 4. Optionally add GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET to enable Google login.
+#
+# The database is only created the first time the Blueprint is applied.
+# If you prefer to keep the existing Aiven MySQL database, remove the
+# `databases` section and the DATABASE_URL env var, then add DB_HOST,
+# DB_PORT, DB_NAME, DB_USER and DB_PASSWORD instead.
+
+databases:
+  - name: sticky-notes-db
+    databaseName: stickynotes
+    user: stickynotes
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: sticky-notes-pro
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm run migrate && npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sticky-notes-db
+          property: connectionString
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false

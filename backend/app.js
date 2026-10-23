@@ -29,13 +29,19 @@ const configuredOrigins = [process.env.FRONTEND_URL, process.env.CORS_ORIGINS]
   .map((value) => value.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
-const allowedOrigins = new Set([
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://127.0.0.1:5500",
-  "https://sticky-notes-pro.onrender.com",
-  ...configuredOrigins,
-]);
+const allowedOrigins = new Set(
+  [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:5500",
+    "https://sticky-notes-pro-ohea.onrender.com",
+    process.env.RENDER_EXTERNAL_URL,
+    process.env.BACKEND_URL,
+    ...configuredOrigins,
+  ]
+    .filter(Boolean)
+    .map((value) => value.replace(/\/$/, "")),
+);
 
 app.use(
   cors({

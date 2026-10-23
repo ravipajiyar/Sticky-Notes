@@ -13,7 +13,8 @@ const isProduction = process.env.NODE_ENV === "production";
 const jwtSecret = process.env.JWT_SECRET || "dev-only-secret-change-me";
 const backendBaseUrl = (
   process.env.BACKEND_URL ||
-  (isProduction ? "https://sticky-notes-pro.onrender.com" : "http://localhost:3001")
+  process.env.RENDER_EXTERNAL_URL ||
+  (isProduction ? "https://sticky-notes-pro-ohea.onrender.com" : "http://localhost:3001")
 ).replace(/\/$/, "");
 const frontendBaseUrl = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 

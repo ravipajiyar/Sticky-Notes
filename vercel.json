@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/auth/:path*",
-      "destination": "https://sticky-notes-pro.onrender.com/auth/:path*"
+      "destination": "https://sticky-notes-pro-ohea.onrender.com/auth/:path*"
     },
     {
       "source": "/notes/:path*",
-      "destination": "https://sticky-notes-pro.onrender.com/notes/:path*"
+      "destination": "https://sticky-notes-pro-ohea.onrender.com/notes/:path*"
     }
   ],
   "headers": [

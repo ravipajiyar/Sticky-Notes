@@ -52,6 +52,10 @@ HttpOnly session cookie work reliably and avoids third-party-cookie issues.
    `render.yaml` creates:
    - a free PostgreSQL database (`sticky-notes-db`)
    - a Node web service (`sticky-notes-pro`) rooted at `backend/`
+
+   If a service with one of those names already exists, Render appends a suffix
+   (for example `sticky-notes-pro-ohea`). Use the actual service URL in the
+   steps below.
 3. Set these environment variables on the web service:
    - `FRONTEND_URL` — your Vercel production URL, e.g. `https://sticky-pro.vercel.app`
    - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — optional, only for Google login
@@ -68,8 +72,8 @@ The app also supports the existing Aiven MySQL database. To use it, remove the
 2. Use the repository root as the project root. `vercel.json` already sets
    `outputDirectory` to `frontend/views`.
 3. Deploy. No build step is required.
-4. If your Render service has a different hostname, update the two rewrite
-   destinations in `vercel.json`:
+4. Update the two rewrite destinations in `vercel.json` to match your actual
+   Render hostname:
    - `/auth/:path*` → `https://<your-service>.onrender.com/auth/:path*`
    - `/notes/:path*` → `https://<your-service>.onrender.com/notes/:path*`
 5. Set the same Vercel URL as `FRONTEND_URL` on Render and redeploy the API.
